@@ -1,0 +1,46 @@
+version: "3"
+services:
+  opa:
+    image: openpolicyagent/opa:latest
+    command: ["run", "--server", "/policies/policy.rego"]
+    volumes:
+      - ./opa:/policies
+    ports:
+      - "8181:8181"
+
+  backend:
+    build: ./backend
+    ports:
+      - "9000:9000"
+
+  gateway:
+    image: openresty/openresty:alpine
+    volumes:
+      - ./nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+      - ./nginx/auth.lua:/usr/local/openresty/nginx/conf/auth.lua
+      - ./logs:/var/log/nginx
+    ports:
+      - "8080:80"
+
+  loki:
+    image: grafana/loki:2.9.0
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    volumes:
+      - ./logs:/var/log/nginx
+      - ./promtail-config.yaml:/etc/promtail/config.yaml
+    command: -config.file=/etc/promtail/config.yaml
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+
+volumes:
+  grafana-storage:

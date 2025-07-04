@@ -1,0 +1,22 @@
+version: "3"
+services:
+  opa:
+    image: openpolicyagent/opa:latest
+    command: ["run", "--server", "/policies/policy.rego"]
+    volumes:
+      - ./opa:/policies
+    ports:
+      - "8181:8181"
+
+  backend:
+    build: ./backend
+    ports:
+      - "9000:9000"
+
+  gateway:
+    image: openresty/openresty:alpine
+    volumes:
+      - ./nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+      - ./nginx/auth.lua:/usr/local/openresty/nginx/conf/auth.lua
+    ports:
+      - "8080:80"

@@ -1,0 +1,57 @@
+{
+  "version": "1.0",
+  "description": "Minimalbeispiel f\u00fcr OpenZiti SDP mit Zugriffskontrolle",
+  "identities": [
+    {
+      "name": "alice",
+      "roleAttributes": [
+        "alice"
+      ],
+      "type": "User"
+    }
+  ],
+  "services": [
+    {
+      "name": "backend-api",
+      "roleAttributes": [
+        "backend-api"
+      ],
+      "configurations": [
+        "backend-config"
+      ]
+    }
+  ],
+  "servicePolicies": [
+    {
+      "name": "allow-alice-access",
+      "type": "ServicePolicy",
+      "semantic": "AllOf",
+      "identityRoles": [
+        "#alice"
+      ],
+      "serviceRoles": [
+        "#backend-api"
+      ]
+    }
+  ],
+  "configurations": [
+    {
+      "name": "backend-config",
+      "type": "intercept.v1",
+      "data": {
+        "protocols": [
+          "tcp"
+        ],
+        "addresses": [
+          "localhost"
+        ],
+        "portRanges": [
+          {
+            "low": 9000,
+            "high": 9000
+          }
+        ]
+      }
+    }
+  ]
+}
