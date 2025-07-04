@@ -1,22 +1,5 @@
 local http = require "resty.http"
 local cjson = require "cjson"
-local socket = require("socket")
---local dns = require "socket.dns"  -- DNS-Auflösung für Hostname → IP
-local vvv = "Policy v.1.44" 
--- print(socket._VERSION)
-ngx.say(socket._VERSION)
-ngx.say(vvv)
-
--- Resolve IP-Adresse von "opa"
-local opa_ip = "127.0.0.1"  -- fallback
-do
-  local resolved, err = socket.dns.toip("opa")
-  if resolved then
-    opa_ip = resolved
-  end
-end
-
-ngx.say("OPA IP:", opa_ip)
 
 -- Extract Authorization header
 local auth = ngx.req.get_headers()["Authorization"]
@@ -41,7 +24,7 @@ if auth and auth:find("Bearer ") then
 end
 
 local httpc = http.new()
-local res, err = httpc:request_uri("http://" .. opa_ip .. ":8181/v1/data/httpapi/authz/allow", {
+local res, err = httpc:request_uri("http://opa:8181/v1/data/httpapi/authz/allow", {
   method = "POST",
   body = cjson.encode({
     input = {
@@ -54,21 +37,9 @@ local res, err = httpc:request_uri("http://" .. opa_ip .. ":8181/v1/data/httpapi
   headers = { ["Content-Type"] = "application/json" }
 })
 
--- Fehlerbehandlung bei Verbindungsfehler
-if not res then
-  ngx.status = 500
-  ngx.say("error: " .. (err or "unkown"))
-  ngx.say(socket._VERSION)
-  ngx.say(vvv)
-  return ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
-end
-
 local success, result = pcall(cjson.decode, res.body)
 if not success or not result or result.result ~= true then
   ngx.status = 403
-  ---ngx.say("Access Denied (OPA failure or policy denied)")
-  ngx.say("Access Denied")
+  ngx.say("Access Denied (OPA failure or policy denied)")
   return ngx.exit(ngx.HTTP_FORBIDDEN)
 end
-
-

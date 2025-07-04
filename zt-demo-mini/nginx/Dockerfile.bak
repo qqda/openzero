@@ -1,13 +1,14 @@
-FROM openresty/openresty:alpine
+FROM openresty/openresty:1.21.4.1-1-bullseye
 
-# Installiere Luarocks und Git
-RUN apk add --no-cache git luarocks
+# Installiere systemabhängige Tools
+RUN apt-get update && \
+    apt-get install -y git curl unzip build-essential libssl-dev luarocks
 
+# Fix: Lua include-Pfad (nicht nötig bei bullseye)
 # Installiere lua-resty-http
 RUN luarocks install lua-resty-http
 
-# Setze das Arbeitsverzeichnis und kopiere die Konfigurationen hinein
+# Arbeitsverzeichnis und Dateien einfügen
 WORKDIR /usr/local/openresty/nginx/conf
-
 COPY nginx.conf nginx.conf
 COPY auth.lua auth.lua
