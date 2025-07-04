@@ -7,7 +7,7 @@ blacklisted {
   input.user == data.blacklist.blocked_users[i]
 }
 
-allow if {
+allow {
   not blacklisted
   input.user == "alice"
   input.role == "admin"

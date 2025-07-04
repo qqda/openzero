@@ -2,12 +2,12 @@ package httpapi.authz
 
 default allow = false
 
-blacklisted {
+blacklisted if {
   some i
   input.user == data.blacklist.blocked_users[i]
 }
 
-allow {
+allow if {
   not blacklisted
   input.user == "alice"
   input.role == "admin"

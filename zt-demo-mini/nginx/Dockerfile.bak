@@ -1,0 +1,13 @@
+FROM openresty/openresty:alpine
+
+# Installiere Luarocks und Git
+RUN apk add --no-cache git luarocks
+
+# Installiere lua-resty-http
+RUN luarocks install lua-resty-http
+
+# Setze das Arbeitsverzeichnis und kopiere die Konfigurationen hinein
+WORKDIR /usr/local/openresty/nginx/conf
+
+COPY nginx.conf nginx.conf
+COPY auth.lua auth.lua

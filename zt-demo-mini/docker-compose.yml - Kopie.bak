@@ -12,10 +12,11 @@ services:
     build: ./backend
     ports:
       - "9000:9000"
+
   gateway:
-    build: ./nginx
+    image: openresty/openresty:alpine
+    volumes:
+      - ./nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+      - ./nginx/auth.lua:/usr/local/openresty/nginx/conf/auth.lua
     ports:
       - "8080:80"
-    volumes:
-      - ./logs:/var/log/nginx
- 

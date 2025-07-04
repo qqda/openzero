@@ -1,29 +1,29 @@
-local jwt = require "resty.jwt"
 local http = require "resty.http"
 local cjson = require "cjson"
 
-local token = ngx.req.get_headers()["Authorization"]
-if not token or not token:find("Bearer ") then
-  ngx.status = 401
-  ngx.say("Missing or invalid Authorization header")
-  return ngx.exit(ngx.HTTP_UNAUTHORIZED)
+-- Extract Authorization header
+local auth = ngx.req.get_headers()["Authorization"]
+local user = "-"
+local role = "-"
+
+if auth and auth:find("Bearer ") then
+  local token = auth:gsub("Bearer ", "")
+  local parts = {}
+  for part in string.gmatch(token, "[^%.]+") do
+    table.insert(parts, part)
+  end
+  if #parts == 3 then
+    local payload_b64 = parts[2]:gsub("-", "+"):gsub("_", "/")
+    local payload_json = ngx.decode_base64(payload_b64)
+    if payload_json then
+      local payload = cjson.decode(payload_json)
+      user = payload["sub"]
+      role = payload["role"]
+    end
+  end
 end
-
-token = token:gsub("Bearer ", "")
-
-local jwt_obj = jwt:verify("secret123", token)
-
-if not jwt_obj.verified then
-  ngx.status = 401
-  ngx.say("Invalid token: ", jwt_obj.reason)
-  return ngx.exit(ngx.HTTP_UNAUTHORIZED)
-end
-
-local user = jwt_obj.payload.sub
-local role = jwt_obj.payload.role
 
 local httpc = http.new()
-local method = ngx.req.get_method()
 local res, err = httpc:request_uri("http://opa:8181/v1/data/httpapi/authz/allow", {
   method = "POST",
   body = cjson.encode({
@@ -31,15 +31,15 @@ local res, err = httpc:request_uri("http://opa:8181/v1/data/httpapi/authz/allow"
       user = user,
       role = role,
       path = { "data" },
-      method = method
+      method = ngx.req.get_method()
     }
   }),
   headers = { ["Content-Type"] = "application/json" }
 })
 
-local result = cjson.decode(res.body)
-if result.result ~= true then
+local success, result = pcall(cjson.decode, res.body)
+if not success or not result or result.result ~= true then
   ngx.status = 403
-  ngx.say("Access Denied")
+  ngx.say("Access Denied (OPA failure or policy denied)")
   return ngx.exit(ngx.HTTP_FORBIDDEN)
 end

@@ -2,7 +2,7 @@ package httpapi.authz
 
 default allow = false
 
-allow {
+allow if {
   input.user == "alice"
   input.role == "admin"
   input.method == "GET"
