@@ -1,21 +1,25 @@
-version: "3"
+version: '3.8'
+
 services:
+  gateway:
+    image: openresty/openresty:1.21.4.1-0-bullseye
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+      - ./nginx/auth.lua:/usr/local/openresty/nginx/conf/auth.lua
+      - ./logs:/var/log/nginx
+
   opa:
     image: openpolicyagent/opa:latest
-    command: ["run", "--server", "/policies/policy.rego"]
-    volumes:
-      - ./opa:/policies
     ports:
       - "8181:8181"
+    volumes:
+      - ./opa/policy.rego:/policies/policy.rego
+      - ./opa/blacklist.json:/policies/blacklist.json
+    command: "run --server --watch /policies"
 
   backend:
     build: ./backend
     ports:
-      - "9000:9000"
-  gateway:
-    build: ./nginx
-    ports:
-      - "8080:80"
-    volumes:
-      - ./logs:/var/log/nginx
- 
+      - "9000:9000"    
