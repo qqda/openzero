@@ -3,7 +3,7 @@ local http = require "resty.http"
 local cjson = require "cjson"
 local socket = require("socket")
 --local dns = require "socket.dns"  -- DNS-Auflösung für Hostname → IP
-local vvv = "Policy v.1.44" 
+local vvv = "Policy v.1.48" 
 -- print(socket._VERSION)
 ngx.say(socket._VERSION)
 ngx.say(vvv)
@@ -40,7 +40,7 @@ if not token or not token:find("Bearer ") then
 end
 
 token = token:gsub("Bearer ", "")
-local jwt_obj = jwt:verify("secret123", token)
+local jwt_obj = jwt:verify("secret123secret123secret123secret123", token)
 
 if not jwt_obj.verified then
   log_access("denied", nil, nil, ngx.req.get_method(), ngx.var.uri, "invalid token")
@@ -55,7 +55,7 @@ local path = ngx.var.uri
 local method = ngx.req.get_method()
 
 local httpc = http.new()
-local res, err = httpc:request_uri("http://opa:8181/v1/data/httpapi/authz/allow", {
+local res, err = httpc:request_uri("http://" .. opa_ip .. ":8181/v1/data/httpapi/authz/allow", {
   method = "POST",
   body = cjson.encode({
     input = {

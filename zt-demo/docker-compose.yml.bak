@@ -2,19 +2,23 @@ version: "3"
 services:
   opa:
     image: openpolicyagent/opa:latest
-    command: ["run", "--server", "/policies/policy.rego"]
-    volumes:
-      - ./opa:/policies
+    container_name: opa
     ports:
       - "8181:8181"
+    volumes:
+      - ./opa/policy.rego:/policies/policy.rego
+      - ./opa/blacklist.json:/policies/blacklist.json
+    command: "run --server  --addr :8181 --log-level=debug  --watch /policies"      
 
   backend:
     build: ./backend
+    container_name: backend
     ports:
       - "9000:9000"
 
   gateway:
-    image: openresty/openresty:alpine
+    build: ./nginx
+    container_name: gateway
     volumes:
       - ./nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
       - ./nginx/auth.lua:/usr/local/openresty/nginx/conf/auth.lua
@@ -24,12 +28,20 @@ services:
 
   loki:
     image: grafana/loki:2.9.0
+    container_name: loki
     ports:
       - "3100:3100"
+    volumes:
+      - ./loki/loki-config.yaml:/etc/loki/local-config.yaml      
     command: -config.file=/etc/loki/local-config.yaml
+    environment:
+      - LOG_LEVEL=warn
+      - LEVEL=warn
+      - GF_LOG_LEVEL=warn
 
   promtail:
     image: grafana/promtail:2.9.0
+    container_name: promtail
     volumes:
       - ./logs:/var/log/nginx
       - ./promtail-config.yaml:/etc/promtail/config.yaml
@@ -37,10 +49,13 @@ services:
 
   grafana:
     image: grafana/grafana:latest
+    container_name: grafana
     ports:
       - "3000:3000"
     volumes:
       - grafana-storage:/var/lib/grafana
+    environment:
+      - GF_LOG_LEVEL=warn
 
 volumes:
   grafana-storage:

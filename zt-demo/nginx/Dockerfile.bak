@@ -7,7 +7,7 @@ RUN apt-get update && \
 
 # Installiere lua-resty-http
 RUN luarocks install lua-resty-http
-RUN luarocks install lua-resty-jwt 0.2.0-0
+RUN luarocks install lua-resty-jwt 0.2.1-0
 # Installation der LuaSocket-Bibliothek
 RUN luarocks install luasocket
 

@@ -28,23 +28,34 @@ services:
 
   loki:
     image: grafana/loki:2.9.0
+    container_name: loki
     ports:
       - "3100:3100"
+    volumes:
+      - ./loki/loki-config.yaml:/etc/loki/local-config.yaml      
     command: -config.file=/etc/loki/local-config.yaml
+    environment:
+      - LOG_LEVEL=warn
+      - LEVEL=warn
+      - GF_LOG_LEVEL=warn
 
   promtail:
     image: grafana/promtail:2.9.0
+    container_name: promtail
     volumes:
       - ./logs:/var/log/nginx
-      - ./promtail-config.yaml:/etc/promtail/config.yaml
+      - ./promtail/promtail-config.yaml:/etc/promtail/config.yaml
     command: -config.file=/etc/promtail/config.yaml
 
   grafana:
     image: grafana/grafana:latest
+    container_name: grafana
     ports:
       - "3000:3000"
     volumes:
       - grafana-storage:/var/lib/grafana
+    environment:
+      - GF_LOG_LEVEL=warn
 
 volumes:
   grafana-storage:
